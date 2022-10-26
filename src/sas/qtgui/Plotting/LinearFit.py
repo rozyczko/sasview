@@ -3,7 +3,7 @@ Adds a linear fit plot to the chart
 """
 import re
 import numpy
-from numbers import Number
+
 from typing import Optional
 from PyQt5 import QtCore
 from PyQt5 import QtGui
@@ -11,19 +11,21 @@ from PyQt5 import QtWidgets
 
 from sas.qtgui.Utilities.GuiUtils import formatNumber, DoubleValidator
 
-from sas.qtgui.Plotting import Fittings
+from bumps.fitproblem import FitProblem
+from sasmodels.core import load_model
+from sasmodels.bumps_model import Model, Experiment
+
 from sas.qtgui.Plotting import DataTransform
-from sas.qtgui.Plotting.LineModel import LineModel
 from sas.qtgui.Plotting.QRangeSlider import QRangeSlider
 import sas.qtgui.Utilities.GuiUtils as GuiUtils
 
 # Local UI
-from sas.qtgui.UI import main_resources_rc
 from sas.qtgui.Plotting.UI.LinearFitUI import Ui_LinearFitUI
 
 
 class LinearFit(QtWidgets.QWidget, Ui_LinearFitUI):
     updatePlot = QtCore.pyqtSignal(tuple)
+
     def __init__(self, parent=None,
                  data=None,
                  max_range=(0.0, 0.0),
@@ -96,12 +98,11 @@ class LinearFit(QtWidgets.QWidget, Ui_LinearFitUI):
                       str(self.xLabel).rstrip())
         self.lblRange.setText('Fit range of ' + label)
 
-        self.model = LineModel()
         # Display the fittings values
-        self.default_A = self.model.getParam('A')
-        self.default_B = self.model.getParam('B')
-        self.cstA = Fittings.Parameter(self.model, 'A', self.default_A)
-        self.cstB = Fittings.Parameter(self.model, 'B', self.default_B)
+        self.cstA = 1.0
+        self.cstB = 1.0
+        kernel = load_model('line')
+        self.model = Model(kernel, scale=1.0, background=0, intercept=self.cstA, slope=self.cstB)
         self.transform = DataTransform
 
         self.q_sliders = None
@@ -146,6 +147,8 @@ class LinearFit(QtWidgets.QWidget, Ui_LinearFitUI):
         xmax = self.xmaxFit
         xminView = xmin
         xmaxView = xmax
+        self.data.qmin = xmin
+        self.data.qmax = xmax
 
         # Set the qmin and qmax in the panel that matches the
         # transformed min and max
@@ -157,8 +160,6 @@ class LinearFit(QtWidgets.QWidget, Ui_LinearFitUI):
         tempx, tempy, tempdy = self.origData()
 
         # Find the fitting parameters
-        self.cstA = Fittings.Parameter(self.model, 'A', self.default_A)
-        self.cstB = Fittings.Parameter(self.model, 'B', self.default_B)
         tempdy = numpy.asarray(tempdy)
         tempdy[tempdy == 0] = 1
 
@@ -166,10 +167,11 @@ class LinearFit(QtWidgets.QWidget, Ui_LinearFitUI):
             xmin = numpy.log10(xmin)
             xmax = numpy.log10(xmax)
 
-        chisqr, out, cov = Fittings.sasfit(self.model,
-                                           [self.cstA, self.cstB],
-                                           tempx, tempy, tempdy,
-                                           xmin, xmax)
+        M = Experiment(data=self.data, model=self.model)
+        problem = FitProblem(M)
+
+        chisqr, out, cov = (0, 0, 0)
+
         # Use chi2/dof
         if len(tempx) > 0:
             chisqr = chisqr / len(tempx)
@@ -307,8 +309,8 @@ class LinearFit(QtWidgets.QWidget, Ui_LinearFitUI):
 
         """
         # TODO: refactor this. This is just a hack to make the
-        # functionality work without rewritting the whole code
-        # with good design (which really should be done...).
+        #  functionality work without rewritting the whole code
+        #  with good design (which really should be done...).
         if self.xLabel == "x":
             return x
         elif self.xLabel == "x^(2)":
