@@ -22,7 +22,7 @@ from sas.qtgui.UI import main_resources_rc
 from sas.qtgui.Plotting.UI.LinearFitUI import Ui_LinearFitUI
 
 
-class LinearFit(QtWidgets.QDialog, Ui_LinearFitUI):
+class LinearFit(QtWidgets.QWidget, Ui_LinearFitUI):
     updatePlot = QtCore.pyqtSignal(tuple)
     def __init__(self, parent=None,
                  data=None,

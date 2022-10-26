@@ -49,6 +49,7 @@ class PlotterBase(QtWidgets.QWidget):
         self.txt_widget = QtWidgets.QTextEdit(None)
 
         # Set the layout and place the canvas widget in it.
+        self.layout = QtWidgets.QHBoxLayout()
         layout = QtWidgets.QVBoxLayout()
         # FIXME setMargin -> setContentsMargins in qt5 with 4 args
         #layout.setContentsMargins(0)
@@ -128,7 +129,8 @@ class PlotterBase(QtWidgets.QWidget):
         else:
             self.toolbar.hide()
 
-        self.setLayout(layout)
+        self.layout.addLayout(layout)
+        self.setLayout(self.layout)
 
     @property
     def data(self):
