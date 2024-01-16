@@ -1004,18 +1004,14 @@ class ResolutionCalculator(object):
                                     self.sample2sample_distance[0]
         # detector offset in x-direction
         detector_offset = 0
-        try:
-            detector_offset = self.sample2detector_distance[1]
-        except Exception as exc:
-            logger.error(exc)
 
         # detector size in [no of pix_x,no of pix_y]
         detector_pix_nums_x = self.detector_size[0]
 
         # get pix_y if it exists, otherwse take it from [0]
-        try:
+        if len(self.detector_size) > 1:
             detector_pix_nums_y = self.detector_size[1]
-        except:
+        else:
             detector_pix_nums_y = self.detector_size[0]
 
         # detector offset in pix number
