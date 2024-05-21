@@ -100,21 +100,8 @@ def main(args: List[str]) -> int:
         - fix the DLLs lookup paths
         - create the appropriate symbolic link
     """
-    for app in args:
-        name = os.path.basename(app)
-        print(f">>> [{name}] Fixing Qt folder names")
-        path = Path(app) / "Contents" / "Frameworks"
-        print(f" !! Processing {path}")
-        # show the content of the directory `path`
-        # print(f" !! content: {list(path.iterdir())}")
-        path2 = Path(app)
-        print(f" !! Processing {path2}")
-        # # show the content of the directory `path2`
-        # for root, dirs, files in os.walk(path2):
-        #     print(f" !! content: {root}")
-        #     for file in files:
-        #         print(f" !! file: {file} in {root}")
-        for folder in find_problematic_folders(path):
+    def fix_folders(folder: Path) -> None:
+        for folder in find_problematic_folders(folder):
             for file in move_contents_to_resources(folder):
                 try:
                     fix_dll(file)
@@ -123,6 +110,25 @@ def main(args: List[str]) -> int:
             shutil.rmtree(folder)
             create_symlink(folder)
             print(f" !! Fixed {folder}")
+
+    for app in args:
+        name = os.path.basename(app)
+        print(f">>> [{name}] Fixing Qt folder names")
+        path = Path(app) / "Contents" / "Frameworks"
+        print(f" !! Processing {path}")
+        fix_folders(path)
+        path = Path(app) / "Contents" / "Resources"
+        print(f" !! Processing {path}")
+        fix_folders(path)
+        # for folder in find_problematic_folders(path):
+        #     for file in move_contents_to_resources(folder):
+        #         try:
+        #             fix_dll(file)
+        #         except (ValueError, IsADirectoryError):
+        #             continue
+        #     shutil.rmtree(folder)
+        #     create_symlink(folder)
+        #     print(f" !! Fixed {folder}")
         print(f">>> [{name}] Application fixed.")
 
 
