@@ -104,6 +104,9 @@ def main(args: List[str]) -> int:
         name = os.path.basename(app)
         print(f">>> [{name}] Fixing Qt folder names")
         path = Path(app) / "Contents" / "MacOS"
+        print(f" !! Processing {path}")
+        # show the content of the directory `path`
+        print(f" !! content: {list(path.iterdir())}")
         for folder in find_problematic_folders(path):
             for file in move_contents_to_resources(folder):
                 try:
