@@ -103,7 +103,7 @@ def main(args: List[str]) -> int:
     for app in args:
         name = os.path.basename(app)
         print(f">>> [{name}] Fixing Qt folder names")
-        path = Path(app) / "Contents" / "MacOS"
+        path = Path(app) / "Contents" / "MacOS" / "sasview"
         print(f" !! Processing {path}")
         # show the content of the directory `path`
         print(f" !! content: {list(path.iterdir())}")
