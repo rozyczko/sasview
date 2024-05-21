@@ -103,10 +103,17 @@ def main(args: List[str]) -> int:
     for app in args:
         name = os.path.basename(app)
         print(f">>> [{name}] Fixing Qt folder names")
-        path = Path(app) / "Contents" / "MacOS" / "sasview"
+        path = Path(app) / "Contents" / "MacOS"
         print(f" !! Processing {path}")
         # show the content of the directory `path`
-        print(f" !! content: {list(path.iterdir())}")
+        # print(f" !! content: {list(path.iterdir())}")
+        path2 = Path(app)
+        print(f" !! Processing {path2}")
+        # show the content of the directory `path2`
+        for root, dirs, files in os.walk(path2):
+            print(f" !! content: {root}")
+            for file in files:
+                print(f" !! file: {file} in {root}")
         for folder in find_problematic_folders(path):
             for file in move_contents_to_resources(folder):
                 try:
