@@ -26,14 +26,14 @@ class DocViewWindow(QtWidgets.QDialog, Ui_DocViewerWindow):
     Instantiates a window to view documentation using a QWebEngineViewer widget
     """
 
-    def __init__(self, parent=None, source: Path = None):
+    def __init__(self, communicator, source: Path = None):
         """The DocViewWindow class is an HTML viewer built into SasView.
 
-        :param parent: Any Qt object with a communicator that can trigger events.
+        :param communicator: Any Communicator object that can trigger events.
         :param source: The Path to the html file.
         """
-        super(DocViewWindow, self).__init__(parent._parent)
-        self.parent = parent
+        super(DocViewWindow, self).__init__(None)
+        self.communicate = communicator
         self.setupUi(self)
         self.setWindowTitle("Documentation Viewer")
 
@@ -49,7 +49,7 @@ class DocViewWindow(QtWidgets.QDialog, Ui_DocViewerWindow):
         """Initialize all external signals that will trigger events for the window."""
         self.editButton.clicked.connect(self.onEdit)
         self.closeButton.clicked.connect(self.onClose)
-        self.parent.communicate.documentationRegeneratedSignal.connect(self.refresh)
+        self.communicate.documentationRegeneratedSignal.connect(self.refresh)
 
     def onEdit(self):
         """Open editor (TabbedModelEditor) window."""
@@ -59,7 +59,7 @@ class DocViewWindow(QtWidgets.QDialog, Ui_DocViewerWindow):
         # Test to see if we're dealing with a model html file or other html file
         if "models" in path[0]:
             py_base_file_name = os.path.splitext(os.path.basename(path[0]))[0]
-            self.editorWindow = TabbedModelEditor(parent=self.parent,
+            self.editorWindow = TabbedModelEditor(parent=self,
                                                   edit_only=True,
                                                   load_file=py_base_file_name,
                                                   model=True)
@@ -70,7 +70,7 @@ class DocViewWindow(QtWidgets.QDialog, Ui_DocViewerWindow):
             # index.html is the only rst file outside the /user/ folder-- set it manually
             if "index.html" in file:
                 file = "/index.html"
-            self.editorWindow = TabbedModelEditor(parent=self.parent,
+            self.editorWindow = TabbedModelEditor(parent=self,
                                                   edit_only=True,
                                                   load_file=file,
                                                   model=False)
@@ -209,7 +209,7 @@ class DocViewWindow(QtWidgets.QDialog, Ui_DocViewerWindow):
         :param file_name: A file-path like object that needs regeneration.
         """
         logging.info("Starting documentation regeneration...")
-        self.parent.communicate.documentationRegenInProgressSignal.emit()
+        self.communicate.documentationRegenInProgressSignal.emit()
         d = threads.deferToThread(self.regenerateDocs, target=file_name)
         d.addCallback(self.docRegenComplete)
         self.regen_in_progress = True
@@ -227,6 +227,6 @@ class DocViewWindow(QtWidgets.QDialog, Ui_DocViewerWindow):
         This method is likely called as a thread call back, but no value is used from that callback return.
         """
         self.loadHtml()
-        self.parent.communicate.documentationRegeneratedSignal.emit()
+        self.communicate.documentationRegeneratedSignal.emit()
         logging.info("Documentation regeneration completed.")
         self.regen_in_progress = False

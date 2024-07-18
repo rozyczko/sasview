@@ -32,12 +32,14 @@ from sas.qtgui.Plotting.Plottables import Plottable
 from sasdata.dataloader.data_info import Sample, Source, Vector
 from sasdata.dataloader.data_info import Detector, Process, TransmissionSpectrum
 from sasdata.dataloader.data_info import Aperture, Collimation
+from sas.sascalc.doc_regen.makedocumentation import HELP_DIRECTORY_LOCATION
 from sas.qtgui.Plotting.Plottables import View
 from sas.qtgui.Plotting.Plottables import PlottableTheory1D
 from sas.qtgui.Plotting.Plottables import PlottableFit1D
 from sas.qtgui.Plotting.Plottables import Text
 from sas.qtgui.Plotting.Plottables import Chisq
 from sas.qtgui.MainWindow.DataState import DataState
+from sas.qtgui.Utilities.DocViewWidget import DocViewWindow
 
 from sas.sascalc.fit.AbstractFitEngine import FResult
 from sas.sascalc.fit.AbstractFitEngine import FitData1D, FitData2D
@@ -526,6 +528,25 @@ def openLink(url):
     else:
         msg = "Attempt at opening an invalid URL"
         raise AttributeError(msg)
+
+
+def showHelp(url):
+    """
+    Open a local url in the default browser
+    """
+    # Remove leading forward slashes from relative paths to allow easy Path building
+    if isinstance(url, str):
+        url = url.lstrip("//")
+    url = Path(url)
+    url_abs = HELP_DIRECTORY_LOCATION / url if str(HELP_DIRECTORY_LOCATION.resolve()) not in str(url.absolute()) else url
+    try:
+        # Help window shows itself
+        window = DocViewWindow(communicator=Communicate(), source=url_abs)
+        window.show()
+        window.activateWindow()
+        window.setFocus()
+    except Exception as ex:
+        logging.warning("Cannot display help. %s" % ex)
 
 
 def retrieveData1d(data):

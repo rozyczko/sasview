@@ -512,7 +512,7 @@ class TabbedModelEditor(QtWidgets.QDialog, Ui_TabbedModelEditor):
         documentation tree (after /doc/ ....".
         """
         location = "/user/qtgui/Perspectives/Fitting/plugin.html"
-        self.parent.showHelp(location)
+        GuiUtils.showHelp(location)
 
     def getModel(self):
         """
