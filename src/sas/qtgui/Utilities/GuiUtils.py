@@ -531,9 +531,7 @@ def openLink(url):
 
 
 def showHelp(url):
-    """
-    Open a local url in the default browser
-    """
+    """Open a local url in the DocViewWindow"""
     # Remove leading forward slashes from relative paths to allow easy Path building
     if isinstance(url, str):
         url = url.lstrip("//")
@@ -545,6 +543,8 @@ def showHelp(url):
         window.show()
         window.activateWindow()
         window.setFocus()
+        # Return the window so the caller can keep it in scope to prevent garbage collection
+        return window
     except Exception as ex:
         logging.warning("Cannot display help. %s" % ex)
 

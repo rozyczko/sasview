@@ -42,6 +42,7 @@ class TabbedModelEditor(QtWidgets.QDialog, Ui_TabbedModelEditor):
         self.model = model
         self.is_modified = False
         self.label = None
+        self.help = None
         self.file_to_regenerate = ""
 
         self.addWidgets()
@@ -512,7 +513,7 @@ class TabbedModelEditor(QtWidgets.QDialog, Ui_TabbedModelEditor):
         documentation tree (after /doc/ ....".
         """
         location = "/user/qtgui/Perspectives/Fitting/plugin.html"
-        GuiUtils.showHelp(location)
+        self.help = GuiUtils.showHelp(location)
 
     def getModel(self):
         """
