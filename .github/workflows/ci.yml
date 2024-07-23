@@ -307,7 +307,7 @@ jobs:
       - name: Rename artifacts (MacOS)
         if: ${{ matrix.installer && startsWith(matrix.os, 'macos') }}
         run: |    
-          mv installers/dist/SasView6.dmg  installers/dist/SasView-6.0.0-alpha-MacOSX.dmg
+          mv installers/dist/SasView6.dmg  installers/dist/SasView-6.0.0-alpha-{{matrix.os}}.dmg
 
       - name: Rename artifacts (Linux)
         if: ${{ matrix.installer && startsWith(matrix.os, 'ubuntu') }}
@@ -324,9 +324,9 @@ jobs:
           replacesArtifacts: true
           token: ${{ secrets.GITHUB_TOKEN }}
           artifacts: "installers/dist/*SasView-6.0.0-*"
-          name: "Release 6.0.0-alpha"
+          name: "Release 6.0.0-beta-2"
           bodyFile: "build_tools/release_notes/6.0.0_notes.txt"
-          tag: "v6.0.0-alpha"
+          tag: "v6.0.0-beta-2"
 
   test-installer:
     needs: [ build-matrix ]
