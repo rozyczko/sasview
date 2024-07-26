@@ -39,7 +39,7 @@ from sas.qtgui.Plotting.Plottables import PlottableFit1D
 from sas.qtgui.Plotting.Plottables import Text
 from sas.qtgui.Plotting.Plottables import Chisq
 from sas.qtgui.MainWindow.DataState import DataState
-from sas.qtgui.Utilities.DocViewWidget import DocViewWindow
+from sas.qtgui.Utilities.DocViewer.DocViewWidget import DocViewWindow
 
 from sas.sascalc.fit.AbstractFitEngine import FResult
 from sas.sascalc.fit.AbstractFitEngine import FitData1D, FitData2D

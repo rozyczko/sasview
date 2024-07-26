@@ -8,7 +8,7 @@ from PySide6 import QtCore, QtWidgets, QtWebEngineCore
 from twisted.internet import threads
 
 from .UI.DocViewWidgetUI import Ui_DocViewerWindow
-from sas.qtgui.Utilities.TabbedModelEditor import TabbedModelEditor
+from sas.qtgui.Utilities.DocViewer.DocEditor import DocEditor
 from sas.sascalc.fit import models
 from sas.sascalc.data_util.calcthread import CalcThread
 from sas.sascalc.doc_regen.makedocumentation import (make_documentation, create_user_files_if_needed,
@@ -93,23 +93,12 @@ class DocViewWindow(QtWidgets.QDialog, Ui_DocViewerWindow):
         # Extract path from QUrl
         path = findall(r"(?<=file:\/\/\/).+\.html", str(self.webEngineViewer.url()))
         # Test to see if we're dealing with a model html file or other html file
-        if "models" in path[0]:
-            py_base_file_name = os.path.splitext(os.path.basename(path[0]))[0]
-            self.editorWindow = TabbedModelEditor(parent=self,
-                                                  edit_only=True,
-                                                  load_file=py_base_file_name,
-                                                  model=True)
-        else:
-            # Remove everything before /user/ (or \user\)
-            file = sub(r"^.*?(?=[\/\\]user)", "", path[0])
+        file = sub(r"^.*?(?=[\/\\]user)", "", path[0])
 
-            # index.html is the only rst file outside the /user/ folder-- set it manually
-            if "index.html" in file:
-                file = "/index.html"
-            self.editorWindow = TabbedModelEditor(parent=self,
-                                                  edit_only=True,
-                                                  load_file=file,
-                                                  model=False)
+        # index.html is the only rst file outside the /user/ folder-- set it manually
+        if "index.html" in file:
+            file = "/index.html"
+        self.editorWindow = DocEditor(parent=self, edit_only=True, load_file=file)
         self.editorWindow.show()
 
     def onClose(self):

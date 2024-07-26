@@ -14,7 +14,7 @@ class DocRegenProgress(QtWidgets.QWidget, Ui_DocRegenProgress):
         self.setupUi(self)
         self.parent = parent
 
-        self.textBrowser.setText("Placeholder Text.")
+        self.textBrowser.setText("")
         self.file_watcher = QtCore.QFileSystemWatcher()
         self.addSignals()
 
@@ -29,7 +29,6 @@ class DocRegenProgress(QtWidgets.QWidget, Ui_DocRegenProgress):
 
     def updateLog(self):
         """This method is triggered whenever the file associated with the file_watcher object is changed."""
-        self.textBrowser.setText("")
         with open(DOC_LOG, 'r') as f:
             self.textBrowser.append(f.read())
 

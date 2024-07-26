@@ -34,8 +34,6 @@ from sas.qtgui.Utilities.GridPanel import BatchOutputPanel
 from sas.qtgui.Utilities.ResultPanel import ResultPanel
 from sas.qtgui.Utilities.OrientationViewer.OrientationViewer import show_orientation_viewer
 from sas.qtgui.Utilities.HidableDialog import hidable_dialog
-from sas.qtgui.Utilities.DocViewWidget import DocViewWindow
-from sas.qtgui.Utilities.DocRegenInProgess import DocRegenProgress
 from sas.qtgui.Utilities.Reports.ReportDialog import ReportDialog
 from sas.qtgui.Utilities.Preferences.PreferencesPanel import PreferencesPanel
 from sas.qtgui.Utilities.About.About import About
@@ -211,7 +209,6 @@ class GuiManager:
         self.DataOperation = DataOperationUtilityPanel(self)
         self.FileConverter = FileConverterWidget(self)
         self.WhatsNew = WhatsNew(self)
-        self.regenProgress = DocRegenProgress(self)
 
     def loadAllPerspectives(self):
         """ Load all the perspectives"""
@@ -384,7 +381,7 @@ class GuiManager:
             url_abs = Path(url)
         try:
             # Help window shows itself
-            self.helpWindow = DocViewWindow(parent=self, source=url_abs)
+            self.helpWindow = GuiUtils.showHelp(url=url_abs)
         except Exception as ex:
             logging.warning("Cannot display help. %s" % ex)
 
