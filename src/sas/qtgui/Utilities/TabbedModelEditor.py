@@ -7,26 +7,24 @@ import datetime
 import logging
 import traceback
 
-from PySide6 import QtWidgets, QtCore, QtGui
+from PySide6 import QtWidgets, QtGui
 from pathlib import Path
 
 from sas.sascalc.fit import models
-from sas.sascalc.fit.models import find_plugins_dir
 
 import sas.qtgui.Utilities.GuiUtils as GuiUtils
-from sas.qtgui.Utilities.UI.TabbedModelEditor import Ui_TabbedModelEditor
-from sas.qtgui.Utilities.PluginDefinition import PluginDefinition
-from sas.qtgui.Utilities.ModelEditor import ModelEditor
+from sas.qtgui.Utilities.EditorWidget import EditorWidget
 
-class TabbedModelEditor(QtWidgets.QDialog, Ui_TabbedModelEditor):
+
+class TabbedModelEditor(EditorWidget):
     """
     Model editor "container" class describing interaction between
     plugin definition widget and model editor widget.
     Once the model is defined, it can be saved as a plugin.
     """
     # Signals for intertab communication plugin -> editor
-    def __init__(self, parent=None, edit_only=False, model=False, load_file=None):
-        super(TabbedModelEditor, self).__init__(parent._parent)
+    def __init__(self, parent=None, load_file=None):
+        super(TabbedModelEditor, self).__init__(parent)
 
         self.parent = parent
 
@@ -37,93 +35,15 @@ class TabbedModelEditor(QtWidgets.QDialog, Ui_TabbedModelEditor):
         self.is_python = True
         self.is_documentation = False
         self.window_title = self.windowTitle()
-        self.edit_only = edit_only
         self.load_file = load_file.lstrip("//") if load_file else None
-        self.model = model
         self.is_modified = False
         self.label = None
         self.help = None
-        self.file_to_regenerate = ""
 
         self.addWidgets()
-
         self.addSignals()
 
-        if self.load_file is not None:
-            self.onLoad(at_launch=True)
-
-    def addWidgets(self):
-        """
-        Populate tabs with widgets
-        """
-        # Set up widget enablement/visibility
-        self.cmdLoad.setVisible(self.edit_only)
-
-        # Add tabs
-        # Plugin definition widget
-        self.plugin_widget = PluginDefinition(self)
-        self.tabWidget.addTab(self.plugin_widget, "Plugin Definition")
-        self.setPluginActive(True)
-
-        self.editor_widget = ModelEditor(self)
-        # Initially, nothing in the editor
-        self.editor_widget.setEnabled(False)
-        self.tabWidget.addTab(self.editor_widget, "Model editor")
-        self.buttonBox.button(QtWidgets.QDialogButtonBox.Apply).setEnabled(False)
-
-        if self.edit_only:
-            self.buttonBox.button(QtWidgets.QDialogButtonBox.Apply).setText("Save")
-            # Hide signals from the plugin widget
-            self.plugin_widget.blockSignals(True)
-            # and hide the tab/widget itself
-            self.tabWidget.removeTab(0)
-        
-        if self.model is not None:
-            self.cmdLoad.setText("Load file...")
-
-    def addSignals(self):
-        """
-        Define slots for common widget signals
-        """
-        # buttons
-        self.buttonBox.button(QtWidgets.QDialogButtonBox.Apply).clicked.connect(self.onApply)
-        self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(self.onCancel)
-        self.buttonBox.button(QtWidgets.QDialogButtonBox.Help).clicked.connect(self.onHelp)
-        self.cmdLoad.clicked.connect(self.onLoad)
-        # signals from tabs
-        self.plugin_widget.modelModified.connect(self.editorModelModified)
-        self.editor_widget.modelModified.connect(self.editorModelModified)
-        self.plugin_widget.txtName.editingFinished.connect(self.pluginTitleSet)
-
-    def setPluginActive(self, is_active=True):
-        """
-        Enablement control for all the controls on the simple plugin editor
-        """
-        self.plugin_widget.setEnabled(is_active)
-
-    def saveClose(self):
-        """
-        Check if file needs saving before closing or model reloading
-        """
-        saveCancelled = False
-        ret = self.onModifiedExit()
-        if ret == QtWidgets.QMessageBox.Cancel:
-            saveCancelled = True
-        elif ret == QtWidgets.QMessageBox.Save:
-            self.updateFromEditor()
-        return saveCancelled
-
-    def closeEvent(self, event):
-        """
-        Overwrite the close even to assure intent
-        """
-        if self.is_modified:
-            saveCancelled = self.saveClose()
-            if saveCancelled:
-                return
-        event.accept()
-
-    def onLoad(self, at_launch=False):
+    def onLoad(self):
         """
         Loads a model plugin file. at_launch is value of whether to attempt a load of a file from launch of the widget or not
         """
@@ -135,31 +55,13 @@ class TabbedModelEditor(QtWidgets.QDialog, Ui_TabbedModelEditor):
                 return
             self.is_modified = False
 
-        # If we are loading in a file at the launch of the editor instead of letting the user pick, we need to process the HTML location from
-        # the documentation viewer into the filepath for its corresponding RST
-        if at_launch:
-            from sas.sascalc.doc_regen.makedocumentation import MAIN_DOC_SRC
-            user_models = find_plugins_dir()
-            user_model_name = user_models + self.load_file + ".py"
-
-            if self.model is True:
-                # Find location of model .py files and load from that location
-                if os.path.isfile(user_model_name):
-                    filename = user_model_name
-                else:
-                    filename = MAIN_DOC_SRC / "user" / "models" / "src" / (self.load_file + ".py")
-            else:
-                filename = MAIN_DOC_SRC / self.load_file.replace(".html", ".rst")
-                self.is_python = False
-                self.is_documentation = True
-        else:
-            plugin_location = models.find_plugins_dir()
-            filename = QtWidgets.QFileDialog.getOpenFileName(
-                                            self,
-                                            'Open Plugin',
-                                            plugin_location,
-                                            'SasView Plugin Model (*.py)',
-                                            None)[0]
+        plugin_location = models.find_plugins_dir()
+        filename = QtWidgets.QFileDialog.getOpenFileName(
+                                        self,
+                                        'Open Plugin',
+                                        plugin_location,
+                                        'SasView Plugin Model (*.py)',
+                                        None)[0]
 
         # Load the file
         if not filename:
@@ -167,9 +69,8 @@ class TabbedModelEditor(QtWidgets.QDialog, Ui_TabbedModelEditor):
             return
 
         # remove c-plugin tab, if present.
-        if self.tabWidget.count()>1:
+        if self.tabWidget.count() > 1:
             self.tabWidget.removeTab(1)
-        self.file_to_regenerate = filename
         self.loadFile(str(filename))
 
     def loadFile(self, filename):
@@ -177,86 +78,19 @@ class TabbedModelEditor(QtWidgets.QDialog, Ui_TabbedModelEditor):
         Performs the load operation and updates the view
         """
         self.editor_widget.blockSignals(True)
-        plugin_text = ""
-        with open(filename, 'r', encoding="utf-8") as plugin:
-            plugin_text = plugin.read()
-            self.editor_widget.txtEditor.setPlainText(plugin_text)
+        self.filename = Path(filename)
+        self.open()
         self.editor_widget.setEnabled(True)
         self.editor_widget.blockSignals(False)
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Apply).setEnabled(True)
-        self.filename = Path(filename)
         display_name = self.filename.stem
-        if not self.model:
-            self.setWindowTitle(self.window_title + " - " + display_name)
-        else:
-            self.setWindowTitle("Documentation Editor" + " - " + display_name)
+        self.setWindowTitle(self.window_title + " - " + display_name)
         # Name the tab with .py filename
         self.tabWidget.setTabText(0, display_name)
-
-        # Check the validity of loaded model if the model is python
-        if self.is_python:
-            error_line = self.checkModel(plugin_text)
-            if error_line > 0:
-                # select bad line
-                cursor = QtGui.QTextCursor(self.editor_widget.txtEditor.document().findBlockByLineNumber(error_line-1))
-                self.editor_widget.txtEditor.setTextCursor(cursor)
-                return
 
         # In case previous model was incorrect, change the frame colours back
         self.editor_widget.txtEditor.setStyleSheet("")
         self.editor_widget.txtEditor.setToolTip("")
-
-        # See if there is filename.c present
-        c_path = self.filename.parent / self.filename.name.replace(".py", ".c")
-        if not c_path.exists() or ".rst" in c_path.name: return
-        # add a tab with the same highlighting
-        c_display_name = c_path.name
-        self.c_editor_widget = ModelEditor(self, is_python=False)
-        self.tabWidget.addTab(self.c_editor_widget, c_display_name)
-        # Read in the file and set in on the widget
-        with open(c_path, 'r', encoding="utf-8") as plugin:
-            self.c_editor_widget.txtEditor.setPlainText(plugin.read())
-        self.c_editor_widget.modelModified.connect(self.editorModelModified)
-
-    def onModifiedExit(self):
-        msg_box = QtWidgets.QMessageBox(self)
-        msg_box.setWindowTitle("SasView Model Editor")
-        msg_box.setText("The document has been modified.")
-        msg_box.setInformativeText("Do you want to save your changes?")
-        msg_box.setStandardButtons(QtWidgets.QMessageBox.Save | QtWidgets.QMessageBox.Discard | QtWidgets.QMessageBox.Cancel)
-        msg_box.setDefaultButton(QtWidgets.QMessageBox.Save)
-        return msg_box.exec()
-
-    def onCancel(self):
-        """
-        Accept if document not modified, confirm intent otherwise.
-        """
-        if self.is_modified:
-            saveCancelled = self.saveClose()
-            if saveCancelled:
-                return
-        self.reject()
-
-    def onApply(self):
-        """
-        Write the plugin and update the model editor if plugin editor open
-        Write/overwrite the plugin if model editor open
-        """
-        if isinstance(self.tabWidget.currentWidget(), PluginDefinition):
-            self.updateFromPlugin()
-        else:
-            self.updateFromEditor()
-        self.is_modified = False
-
-    def editorModelModified(self):
-        """
-        User modified the model in the Model Editor.
-        Disable the plugin editor and show that the model is changed.
-        """
-        self.setTabEdited(True)
-        self.plugin_widget.txtFunction.setStyleSheet("")
-        self.buttonBox.button(QtWidgets.QDialogButtonBox.Apply).setEnabled(True)
-        self.is_modified = True
 
     def pluginTitleSet(self):
         """
@@ -278,22 +112,6 @@ class TabbedModelEditor(QtWidgets.QDialog, Ui_TabbedModelEditor):
             self.editor_widget.txtEditor.setPlainText('')
             self.editor_widget.blockSignals(False)
             self.editor_widget.setEnabled(False)
-
-    def setTabEdited(self, is_edited):
-        """
-        Change the widget name to indicate unsaved state
-        Unsaved state: add "*" to filename display
-        saved state: remove "*" from filename display
-        """
-        current_text = self.windowTitle()
-
-        if is_edited:
-            if current_text[-1] != "*":
-                current_text += "*"
-        else:
-            if current_text[-1] == "*":
-                current_text = current_text[:-1]
-        self.setWindowTitle(current_text)
 
     def updateFromPlugin(self):
         """
@@ -341,11 +159,11 @@ class TabbedModelEditor(QtWidgets.QDialog, Ui_TabbedModelEditor):
         self.setTabEdited(False)
 
         # Notify listeners
-        self.parent.communicate.customModelDirectoryChanged.emit()
+        self.communicate.customModelDirectoryChanged.emit()
 
         # Notify the user
         msg = "Custom model "+filename + " successfully created."
-        self.parent.communicate.statusBarUpdateSignal.emit(msg)
+        self.communicate.statusBarUpdateSignal.emit(msg)
         logging.info(msg)
 
     def checkModel(self, model_str):
@@ -371,7 +189,7 @@ class TabbedModelEditor(QtWidgets.QDialog, Ui_TabbedModelEditor):
 
             # Set the status bar message
             # GuiUtils.Communicate.statusBarUpdateSignal.emit("Model check failed")
-            self.parent.communicate.statusBarUpdateSignal.emit("Model check failed")
+            self.communicate.statusBarUpdateSignal.emit("Model check failed")
             # Put a thick, red border around the mini-editor
             self.tabWidget.currentWidget().txtEditor.setStyleSheet("border: 5px solid red")
             # last_lines = traceback.format_exc().split('\n')[-4:]
@@ -389,7 +207,7 @@ class TabbedModelEditor(QtWidgets.QDialog, Ui_TabbedModelEditor):
                         error_line = 0
         return error_line
 
-    def isModelCorrect(self, full_path):
+    def validateChanges(self):
         """
         Run the sasmodels method for model check
         and return True if the model is good.
@@ -397,7 +215,7 @@ class TabbedModelEditor(QtWidgets.QDialog, Ui_TabbedModelEditor):
         """
         successfulCheck = True
         try:
-            model_results = GuiUtils.checkModel(full_path)
+            model_results = GuiUtils.checkModel(self.load_file)
             logging.info(model_results)
         # We can't guarantee the type of the exception coming from
         # Sasmodels, so need the overreaching general Exception
@@ -411,10 +229,10 @@ class TabbedModelEditor(QtWidgets.QDialog, Ui_TabbedModelEditor):
             logging.error(traceback_to_show)
 
             # Set the status bar message
-            self.parent.communicate.statusBarUpdateSignal.emit("Model check failed")
+            self.communicate.statusBarUpdateSignal.emit("Model check failed")
 
             # Remove the file so it is not being loaded on refresh
-            os.remove(full_path)
+            os.remove(self.load_file)
             # Put a thick, red border around the mini-editor
             self.plugin_widget.txtFunction.setStyleSheet("border: 5px solid red")
             # Use the last line of the traceback for the tooltip
@@ -455,24 +273,12 @@ class TabbedModelEditor(QtWidgets.QDialog, Ui_TabbedModelEditor):
         self.setTabEdited(False)
 
         # Notify listeners, since the plugin name might have changed
-        self.parent.communicate.customModelDirectoryChanged.emit()
+        self.communicate.customModelDirectoryChanged.emit()
 
         # notify the user
         msg = str(filename) + " successfully saved."
-        self.parent.communicate.statusBarUpdateSignal.emit(msg)
+        self.communicate.statusBarUpdateSignal.emit(msg)
         logging.info(msg)
-        if self.is_documentation:
-            self.regenerateDocumentation()
-    
-    def regenerateDocumentation(self):
-        """
-        Defer to subprocess the documentation regeneration process
-        """
-        # TODO: Move the doc regen methods out of the documentation window - this forces the window to remain open
-        #  in order for the documentation regeneration process to run.
-        # The regen method is part of the documentation window. If the window is closed, the method no longer exists.
-        if hasattr(self.parent, 'helpWindow'):
-            self.parent.helpWindow.regenerateHtml(self.filename)
 
     def canWriteModel(self, model=None, full_path=""):
         """
@@ -520,14 +326,6 @@ class TabbedModelEditor(QtWidgets.QDialog, Ui_TabbedModelEditor):
         Retrieves plugin model from the currently open tab
         """
         return self.tabWidget.currentWidget().getModel()
-
-    @classmethod
-    def writeFile(cls, fname, model_str=""):
-        """
-        Write model content to file "fname"
-        """
-        with open(fname, 'w', encoding="utf-8") as out_f:
-            out_f.write(model_str)
 
     def generateModel(self, model, fname):
         """

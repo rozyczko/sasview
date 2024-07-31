@@ -195,6 +195,7 @@ class DocViewWindow(QtWidgets.QDialog, Ui_DocViewerWindow):
         settings.setAttribute(QtWebEngineCore.QWebEngineSettings.LocalContentCanAccessRemoteUrls, True)
         settings.setAttribute(QtWebEngineCore.QWebEngineSettings.LocalContentCanAccessFileUrls, True)
         self.webEngineViewer.load(url)
+        self.setWindowTitle(str(self.source))
 
         # Show widget
         self.onShow()

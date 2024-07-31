@@ -1154,7 +1154,7 @@ class GuiManager:
     def actionEdit_Custom_Model(self):
         """
         """
-        self.model_editor = TabbedModelEditor(self, edit_only=True)
+        self.model_editor = TabbedModelEditor(self)
         self.model_editor.show()
 
     def actionManage_Custom_Models(self):
