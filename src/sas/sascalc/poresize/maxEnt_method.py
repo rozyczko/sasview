@@ -2,8 +2,8 @@ import numpy as np
 import math
 import csv
 import matplotlib.pyplot as plt
-from sasmodels import resolution as rst
-from sasdata.dataloader import data_info
+from sasmodels.sasmodels import resolution as rst
+from sasdata.sasdata.dataloader import data_info
 
 '''
 sbmaxent
