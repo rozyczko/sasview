@@ -1,3 +1,5 @@
+import sys
+sys.path.insert(1, 'C:/Sasview_dev')
 import pytest
 from maxEnt_method import sizeDistribution
 import csv
