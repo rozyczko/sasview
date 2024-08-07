@@ -2,12 +2,12 @@ import pytest
 from maxEnt_method import sizeDistribution
 import csv
 import numpy as np
-from sasmodels.sasmodels import resolution as rst
-from sasdata.sasdata.dataloader import data_info
+from sasmodels import resolution as rst
+from sasdata.dataloader import data_info
 
-class TestSizeDistribution:
+class SizeDistributionTest:
     @pytest.fixture(autouse=True)
-    class SizeDistribution:
+    class StartTest:
         def __init__(self,filename,answerFile):
             self.fileName = filename
             self.answer = answerFile
@@ -78,7 +78,7 @@ class TestSizeDistribution:
     
     filename1 = 'test_data/Alumina_usaxs_irena_Iq_fit.csv'
     answer1 = 'test_data/Alumina_usaxs_irena_diameter_fit.csv'
-    data1 = SizeDistribution(filename1,answer1)
+    data1 = StartTest(filename1,answer1)
 
     def test_noRes(self,data1):
         data1.file_to_input(diamRange=[25,10000,100])
