@@ -28,12 +28,13 @@ jobs = []
 os_release_list = [
     'ubuntu-20.04',
     'windows-latest',
-    'macos-latest'
+    'macos-13'
 ]
 
 # List of OS images to use for release tests
 os_test_list = os_release_list + [
     'ubuntu-latest',
+    'macos-latest'
 ]
 
 # List of python versions to use for release builds

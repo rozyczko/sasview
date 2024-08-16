@@ -16,6 +16,9 @@ env:
   INSTALLER_OLD_RUNID: 3204825457
   # The test-installer job can run with the pyinstaller debug bundle
   INSTALLER_USE_DEBUG: false
+  MACOSX_DEPLOYMENT_TARGET: "10.9"
+  # We need to force compile for universal2 support
+  CFLAGS: -arch arm64 -arch x86_64
 
 jobs:
   matrix:
@@ -83,7 +86,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install wheel setuptools
-          python -m pip install --no-binary=:all: -r build_tools/requirements.txt
+          python -m pip install --upgrade --no-binary -r build_tools/requirements.txt
 
       - name: Install pywin32 (Windows)
         if: ${{ startsWith(matrix.os, 'windows') }}
@@ -195,8 +198,30 @@ jobs:
       ### Build the installer (if enabled)
 
       - name: Install utilities to build installer
+        if: ${{ startsWith(matrix.os, 'macos') != true }}
         run: |
           python -m pip install pyinstaller
+
+      - name: Checkout PyInstaller
+        # We need to build the PyInstaller bootloader from sources:
+        # https://github.com/pyinstaller/pyinstaller/issues/6235
+        if: ${{ matrix.installer && startsWith(matrix.os, 'macos') }}
+        uses: actions/checkout@v2
+        with:
+          repository: pyinstaller/pyinstaller
+          path: pyinstaller
+      - name: Build PyInstaller bootloader for Universal2 MacOS Support
+        # Make sure we checkout the latest stable release
+        if: ${{ matrix.installer && startsWith(matrix.os, 'macos') }}
+        run: |
+          python --version
+          cd pyinstaller/bootloader
+          git fetch --tags
+          git checkout $(git describe --tags $(git rev-list --tags --max-count=1))
+          python3 ./waf all
+          cd ..
+          python3 -m pip install .
+          cd ..
 
       - name: Build sasview with pyinstaller
         if: ${{ matrix.installer }}
