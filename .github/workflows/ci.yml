@@ -70,6 +70,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          architecture: x86
           cache: 'pip'
           cache-dependency-path: |
             **/ci.yml
@@ -86,7 +87,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install wheel setuptools
-          python -m pip install --upgrade --no-binary=:all: -r build_tools/requirements.txt
+          python -m pip install --upgrade -r build_tools/requirements.txt
 
       - name: Install pywin32 (Windows)
         if: ${{ startsWith(matrix.os, 'windows') }}
