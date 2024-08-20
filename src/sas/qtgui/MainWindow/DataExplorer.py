@@ -1158,6 +1158,8 @@ class DataExplorerWindow(DroppableDataLoadWidget):
         if new_plots:
             self.plotData(new_plots)
 
+        self.parent.tabbedPlotWidget.show_or_activate()
+
     def isPlotShown(self, plot):
         """
         Checks currently shown plots and returns true if match
