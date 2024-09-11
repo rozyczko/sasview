@@ -125,7 +125,7 @@ class FittingWidget(QtWidgets.QWidget, Ui_FittingWidgetUI):
         super(FittingWidget, self).__init__()
 
         # Necessary globals
-        self.parent  = parent
+        self.parent = parent
         self.process = None    # Default empty value
 
         # Which tab is this widget displayed in?
@@ -2449,8 +2449,10 @@ class FittingWidget(QtWidgets.QWidget, Ui_FittingWidgetUI):
         self.cmdPlot.setText("Compute/Plot")
         # Force data recalculation so existing charts are updated
         if not self.data_is_loaded:
+            print("showTheoryPlot from FittingWidget")
             self.showTheoryPlot()
         else:
+            print("showPlot from FittingWidget")
             self.showPlot()
         # This is an important processEvent.
         # This allows charts to be properly updated in order
@@ -2507,6 +2509,11 @@ class FittingWidget(QtWidgets.QWidget, Ui_FittingWidgetUI):
         """
         Emits plotRequestedSignal for all plots found in the given model under the provided item name.
         """
+        # send this information to the TabbedPlotWidget so that it can unpack and show the plots as well
+        print("send to tabbedPlotWidget")
+        self.parent.tabbedPlotWidget.add_tab(item_name, item_model, self.tab_id)
+
+        print("_requestPlots from FittingWidget")
         fitpage_name = self.kernel_module.name
         plots = GuiUtils.plotsFromDisplayName(item_name, item_model)
         # Has the fitted data been shown?
