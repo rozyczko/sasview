@@ -1203,17 +1203,22 @@ class DataExplorerWindow(DroppableDataLoadWidget):
         for item, plot_set in plots:
             if isinstance(plot_set, Data1D):
                 if 'new_plot' not in locals():
+                    # Create only one PlotterWidget(QWidget) for a number of datasets that are supposed to be shown in
+                    # the same Widget
+                    print("created PlotterWidget for:", item)
                     new_plot = PlotterWidget(manager=self, parent=self)
                     new_plot.item = item
+                print("plotted plot for:", item)
                 new_plot.plot(plot_set, transform=transform)
                 # active_plots may contain multiple charts
                 self.active_plots[plot_set.name] = new_plot
-                print("from DataExplorer.plotData: self.active_plots", self.active_plots)
             elif isinstance(plot_set, Data2D):
                 self.addDataPlot2D(plot_set, item)
             else:
                 msg = "Incorrect data type passed to Plotting"
                 raise AttributeError(msg)
+
+        print("from DataExplorer.plotData: self.active_plots", self.active_plots)
 
         if 'new_plot' in locals() and \
             hasattr(new_plot, 'data') and \
